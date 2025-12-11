@@ -1,0 +1,9 @@
+{
+  "appId": "com.voip.wrapper",
+  "appName": "CelyaVox Mobile",
+  "webDir": "www",
+  "server": {
+    "url": "https://freepbx17-dev.celya.fr/sipapp/",
+    "cleartext": true
+  }
+}
