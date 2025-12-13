@@ -1,6 +1,8 @@
 node_modules/
 dist/
 www/
+phone/
+
 .DS_Store
 .env
 
