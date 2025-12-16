@@ -147,7 +147,12 @@ function sendWakeUpNotification($token) {
                 'action' => 'reconnect_sip',
                 'timestamp' => (string)time(),
                 'title' => 'CelyaVox',
-                'body' => 'Appel entrant...'
+                'body' => 'Appel entrant...',
+                // Champs spécifiques pour callkit-voip-capacitor-plugin
+                'name' => 'CelyaVox Call',
+                'id' => uniqid(),
+                'media' => 'audio',
+                'duration' => '30'
             ],
             'android' => [
                 'priority' => 'high',
@@ -207,6 +212,38 @@ function isValidToken($token) {
     return !empty($token) && strlen($token) > 50;
 }
 
+// Récupérer le token depuis la BDD
+function getFcmTokenFromExtension($extension) {
+    $host = getenv('DB_HOST');
+    $dbname = getenv('DB_NAME');
+    $user = getenv('DB_USER');
+    $pass = getenv('DB_PASS');
+
+    if (!$host || !$dbname || !$user || !$pass) {
+        die("❌ Erreur: Configuration base de données incomplète dans .env (DB_HOST, DB_NAME, DB_USER, DB_PASS)\n");
+    }
+
+    try {
+        $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
+        $pdo = new PDO($dsn, $user, $pass, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]);
+
+        $stmt = $pdo->prepare("SELECT token_fcm FROM token_fcm WHERE extension = ?");
+        $stmt->execute([$extension]);
+        $result = $stmt->fetch();
+
+        if ($result) {
+            return $result['token_fcm'];
+        } else {
+            return null;
+        }
+    } catch (PDOException $e) {
+        die("❌ Erreur connexion BDD: " . $e->getMessage() . "\n");
+    }
+}
+
 // --- MAIN ---
 
 // Chargement de la configuration
@@ -215,22 +252,34 @@ loadEnv($envPath);
 
 // Vérification des arguments
 if ($argc < 2) {
-    echo "❌ Usage: php " . basename(__FILE__) . " <FCM_TOKEN>\n\n";
+    echo "❌ Usage: php " . basename(__FILE__) . " <EXTENSION>\n\n";
     echo "Exemple:\n";
-    echo "  php wake_app.php dXp8...ABC123\n\n";
+    echo "  php wake_app.php 1001\n\n";
     echo "Configuration:\n";
     echo "  1. Téléchargez le Service Account JSON depuis Firebase\n";
     echo "  2. Créez un fichier .env avec:\n";
     echo "     FCM_PROJECT_ID=votre-project-id\n";
-    echo "     FCM_SERVICE_ACCOUNT_JSON=/chemin/vers/service-account.json\n\n";
+    echo "     FCM_SERVICE_ACCOUNT_JSON=/chemin/vers/service-account.json\n";
+    echo "     DB_HOST=localhost\n";
+    echo "     DB_NAME=ma_base\n";
+    echo "     DB_USER=mon_user\n";
+    echo "     DB_PASS=mon_pass\n\n";
     exit(1);
 }
 
-$token = $argv[1];
+$extension = $argv[1];
+echo "🔍 Recherche du token pour l'extension: $extension...\n";
+
+$token = getFcmTokenFromExtension($extension);
+
+if (!$token) {
+    echo "❌ Erreur: Aucun token FCM trouvé pour l'extension $extension\n";
+    exit(1);
+}
 
 // Validation du token
 if (!isValidToken($token)) {
-    echo "❌ Erreur: Le token FCM semble invalide (trop court)\n";
+    echo "❌ Erreur: Le token FCM trouvé en base semble invalide (trop court)\n";
     exit(1);
 }
 
