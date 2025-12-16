@@ -1,4 +1,4 @@
-package com.voip.wrapper;
+package fr.celya.celyavox;
 
 import com.getcapacitor.BridgeActivity;
 

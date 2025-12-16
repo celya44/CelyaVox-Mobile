@@ -16,5 +16,8 @@
     "@capacitor/ios": "^6.2.1",
     "@capacitor/push-notifications": "^6.0.5",
     "callkit-voip-capacitor-plugin": "^1.2.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5"
   }
 }
