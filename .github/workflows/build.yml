@@ -47,9 +47,9 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          # Clean build cache to avoid jar creation issues
-          ./gradlew clean
-          ./gradlew assembleDebug --stacktrace
+          # Use --no-daemon to avoid concurrency/locking issues in CI
+          # Use --refresh-dependencies to force fresh download of artifacts
+          ./gradlew clean assembleDebug --no-daemon --refresh-dependencies --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
