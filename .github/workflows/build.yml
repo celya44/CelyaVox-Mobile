@@ -19,6 +19,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -47,9 +50,7 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          # Use --no-daemon to avoid concurrency/locking issues in CI
-          # Use --refresh-dependencies to force fresh download of artifacts
-          ./gradlew clean assembleDebug --no-daemon --refresh-dependencies --stacktrace
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
