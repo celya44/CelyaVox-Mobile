@@ -3,6 +3,9 @@ dist/
 www/
 .DS_Store
 .env
+phone/
+
+firebase-service-account.json
 
 # Android
 android/build/
