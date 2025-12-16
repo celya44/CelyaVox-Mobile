@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "245937886400",
+    "project_id": "celyavox-mobile",
+    "storage_bucket": "celyavox-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:245937886400:android:e54e716005a84ea3038925",
+        "android_client_info": {
+          "package_name": "fr.celya.celyavox"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2BT7MaO8DariyAROWgQHq_lAh4R4HWVU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
