@@ -22,12 +22,6 @@ allprojects {
         google()
         mavenCentral()
     }
-    configurations.all {
-        resolutionStrategy {
-            // Force an older stable version of Bouncy Castle to avoid "Failed to create Jar file" with 1.79
-            force 'org.bouncycastle:bcprov-jdk18on:1.78.1'
-        }
-    }
 }
 
 task clean(type: Delete) {
