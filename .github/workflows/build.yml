@@ -21,6 +21,8 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-disabled: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -48,10 +50,11 @@ jobs:
 
       - name: Build Android APK
         run: |
+          # Force clean Gradle cache to fix "Failed to create Jar file" error
+          rm -rf ~/.gradle/caches/
+          
           cd android
           chmod +x gradlew
-          # Use --no-parallel and --max-workers=1 to avoid concurrency issues with Jar creation
-          # Use --no-daemon to ensure a fresh process
           ./gradlew clean assembleDebug --no-daemon --no-parallel --max-workers=1 --stacktrace
 
       - name: Upload APK
