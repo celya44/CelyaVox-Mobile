@@ -30,3 +30,24 @@ index 1234567..abcdefg 100644
  
          // Intent receiveCallAction = new Intent(getApplicationContext(), mainAppClass);
  
+@@ -303,6 +318,10 @@ public class CallNotificationService extends Service implements MediaPlayer.OnPr
+         PendingIntent receiveCallPendingIntent = PendingIntent.getActivity(getApplicationContext(), 1200, receiveCallAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+         PendingIntent cancelCallPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 1201, cancelCallAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+         PendingIntent callDialogPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 1202, callDialogAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
++        
++        // NEW: PendingIntent for Full Screen / Content Click (reuse receiveCallAction which opens the app)
++        PendingIntent openAppPendingIntent = PendingIntent.getActivity(getApplicationContext(), 1203, receiveCallAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
++
+ 
+         // createChannel();
+         NotificationCompat.Builder notificationBuilder = null;
+@@ -315,7 +334,8 @@ public class CallNotificationService extends Service implements MediaPlayer.OnPr
+                 .addAction(R.drawable.ic_call_black_24dp, getString(R.string.reject), cancelCallPendingIntent)
+                 .addAction(R.drawable.ic_call_black_24dp, getString(R.string.answer), receiveCallPendingIntent)
+                 .setAutoCancel(true)
+-                .setSound(ringUri);
++                .setSound(ringUri)
++                .setContentIntent(openAppPendingIntent)
++                .setFullScreenIntent(openAppPendingIntent, true);
+             
+         }
