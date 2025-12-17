@@ -2,7 +2,7 @@ diff --git a/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/co
 index 1234567..abcdefg 100644
 --- a/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallNotificationService.java
 +++ b/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallNotificationService.java
-@@ -218,13 +218,21 @@ public class CallNotificationService extends Service implements MediaPlayer.OnPr
+@@ -218,11 +218,23 @@ public class CallNotificationService extends Service implements MediaPlayer.OnPr
          Log.d("onStartCommand!!", roomname);
      }
      try {
@@ -10,10 +10,11 @@ index 1234567..abcdefg 100644
 -        Class<?> mainAppClass = Class.forName("com.lsportal.migration.MainApplication");
 -        Object mainAppInstance = mainAppClass.getMethod("getInstance").invoke(null);
 -        Intent receiveCallAction = (Intent) mainAppClass.getMethod("getLaunchMainActivity").invoke(mainAppInstance);;
+-        
 +        // FIX: Use the package name from context instead of hardcoded class
 +        String packageName = getApplicationContext().getPackageName();
 +        Intent receiveCallAction = getPackageManager().getLaunchIntentForPackage(packageName);
-         
++        
 +        if (receiveCallAction == null) {
 +            Log.e("CallNotificationService", "Could not find launch intent for package: " + packageName);
 +            // Fallback to generic intent if possible, or just log error
@@ -24,9 +25,12 @@ index 1234567..abcdefg 100644
 +            // Ensure we have the right flags to bring activity to front
 +            receiveCallAction.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 +        }
++
++        /*
++        Class<?> mainAppClass = Class.forName("com.lsportal.migration.MainApplication");
++        Object mainAppInstance = mainAppClass.getMethod("getInstance").invoke(null);
++        Intent receiveCallAction = (Intent) mainAppClass.getMethod("getLaunchMainActivity").invoke(mainAppInstance);;
++        */
  
--        // Intent receiveCallAction = new Intent(getApplicationContext(), mainAppClass);
-+        // Intent receiveCallAction = new Intent(getApplicationContext(), mainAppClass);
+         // Intent receiveCallAction = new Intent(getApplicationContext(), mainAppClass);
  
-         receiveCallAction.putExtra("ConstantApp.CALL_RESPONSE_ACTION_KEY", "ConstantApp.CALL_RECEIVE_ACTION");
-         receiveCallAction.putExtra("ACTION_TYPE", "RECEIVE_CALL");
