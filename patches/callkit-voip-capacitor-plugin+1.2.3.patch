@@ -1,8 +1,8 @@
 diff --git a/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallNotificationService.java b/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallNotificationService.java
-index 1234567..abcdefg 100644
+index 44be2b6..a6e893e 100644
 --- a/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallNotificationService.java
 +++ b/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallNotificationService.java
-@@ -218,11 +218,26 @@ public class CallNotificationService extends Service implements MediaPlayer.OnPr
+@@ -217,11 +217,26 @@ public int onStartCommand(Intent intent, int flags, int startId) {
          Log.d("onStartCommand!!", roomname);
      }
      try {
@@ -30,24 +30,37 @@ index 1234567..abcdefg 100644
  
          // Intent receiveCallAction = new Intent(getApplicationContext(), mainAppClass);
  
-@@ -303,6 +318,10 @@ public class CallNotificationService extends Service implements MediaPlayer.OnPr
-         PendingIntent receiveCallPendingIntent = PendingIntent.getActivity(getApplicationContext(), 1200, receiveCallAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+@@ -242,6 +257,13 @@ public int onStartCommand(Intent intent, int flags, int startId) {
+ 
+         receiveCallAction.setAction("RECEIVE_CALL");
+ 
++        // NEW: Create an intent just to open the app (without answering)
++        Intent openAppAction = new Intent(receiveCallAction);
++        openAppAction.setAction("OPEN_APP_INCOMING_CALL");
++        openAppAction.removeExtra("ConstantApp.CALL_RESPONSE_ACTION_KEY");
++        openAppAction.removeExtra("ACTION_TYPE");
++        openAppAction.removeExtra("eventName");
++
+         Intent cancelCallAction = new Intent(getApplicationContext(), CallNotificationActionReceiver.class);
+         cancelCallAction.putExtra("ConstantApp.CALL_RESPONSE_ACTION_KEY", "ConstantApp.CALL_CANCEL_ACTION");
+         cancelCallAction.putExtra("ACTION_TYPE", "CANCEL_CALL");
+@@ -281,6 +303,9 @@ public int onStartCommand(Intent intent, int flags, int startId) {
          PendingIntent cancelCallPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 1201, cancelCallAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
          PendingIntent callDialogPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 1202, callDialogAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-+        
-+        // NEW: PendingIntent for Full Screen / Content Click (reuse receiveCallAction which opens the app)
-+        PendingIntent openAppPendingIntent = PendingIntent.getActivity(getApplicationContext(), 1203, receiveCallAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+         
++        // NEW: PendingIntent for Full Screen / Content Click
++        PendingIntent openAppPendingIntent = PendingIntent.getActivity(getApplicationContext(), 1203, openAppAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 +
- 
          // createChannel();
          NotificationCompat.Builder notificationBuilder = null;
-@@ -315,7 +334,8 @@ public class CallNotificationService extends Service implements MediaPlayer.OnPr
-                 .addAction(R.drawable.ic_call_black_24dp, getString(R.string.reject), cancelCallPendingIntent)
+         if (data != null) {
+@@ -295,7 +320,8 @@ public int onStartCommand(Intent intent, int flags, int startId) {
                  .addAction(R.drawable.ic_call_black_24dp, getString(R.string.answer), receiveCallPendingIntent)
                  .setAutoCancel(true)
--                .setSound(ringUri);
-+                .setSound(ringUri)
+                 .setSound(ringUri)
+-                .setFullScreenIntent(callDialogPendingIntent, true);
 +                .setContentIntent(openAppPendingIntent)
 +                .setFullScreenIntent(openAppPendingIntent, true);
              
          }
+ 
