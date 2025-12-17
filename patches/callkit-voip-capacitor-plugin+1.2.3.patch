@@ -1,8 +1,43 @@
+diff --git a/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallKitVoipPlugin.java b/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallKitVoipPlugin.java
+index f2ccfba..92c94df 100644
+--- a/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallKitVoipPlugin.java
++++ b/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallKitVoipPlugin.java
+@@ -52,6 +52,10 @@ public class CallKitVoipPlugin extends Plugin {
+         String duration = data.getStringExtra("duration");
+         String media = data.getStringExtra("media");
+         String eventName = data.getStringExtra("eventName");
++
++        if (eventName != null) {
++            notifyEvent(eventName, callerId, group, message, organization, roomname, source, title, type, duration, media);
++        }
+     }
+ 
+     @PluginMethod
 diff --git a/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallNotificationService.java b/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallNotificationService.java
-index 44be2b6..a6e893e 100644
+index 44be2b6..72b4e01 100644
 --- a/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallNotificationService.java
 +++ b/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallNotificationService.java
-@@ -217,11 +217,26 @@ public int onStartCommand(Intent intent, int flags, int startId) {
+@@ -50,17 +50,8 @@ private Handler handler;
+ private boolean status = false;
+ private boolean vstatus = false;
+ 
+-Timer timer = new Timer();
+-
+-TimerTask task = new TimerTask() {
+-    @Override
+-    public void run() {
+-        releaseMediaPlayer();
+-        releaseVibration();
+-        getApplicationContext().stopService(new Intent(getApplicationContext(), CallNotificationService.class));
+-        timer.cancel();
+-    }
+-};
++private Timer timer;
++private TimerTask task;
+ 
+ 
+ @Nullable
+@@ -217,11 +208,26 @@ public int onStartCommand(Intent intent, int flags, int startId) {
          Log.d("onStartCommand!!", roomname);
      }
      try {
@@ -30,7 +65,7 @@ index 44be2b6..a6e893e 100644
  
          // Intent receiveCallAction = new Intent(getApplicationContext(), mainAppClass);
  
-@@ -242,6 +257,13 @@ public int onStartCommand(Intent intent, int flags, int startId) {
+@@ -242,6 +248,13 @@ public int onStartCommand(Intent intent, int flags, int startId) {
  
          receiveCallAction.setAction("RECEIVE_CALL");
  
@@ -44,7 +79,7 @@ index 44be2b6..a6e893e 100644
          Intent cancelCallAction = new Intent(getApplicationContext(), CallNotificationActionReceiver.class);
          cancelCallAction.putExtra("ConstantApp.CALL_RESPONSE_ACTION_KEY", "ConstantApp.CALL_CANCEL_ACTION");
          cancelCallAction.putExtra("ACTION_TYPE", "CANCEL_CALL");
-@@ -281,6 +303,9 @@ public int onStartCommand(Intent intent, int flags, int startId) {
+@@ -281,6 +294,9 @@ public int onStartCommand(Intent intent, int flags, int startId) {
          PendingIntent cancelCallPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 1201, cancelCallAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
          PendingIntent callDialogPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 1202, callDialogAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
          
@@ -54,7 +89,7 @@ index 44be2b6..a6e893e 100644
          // createChannel();
          NotificationCompat.Builder notificationBuilder = null;
          if (data != null) {
-@@ -295,7 +320,8 @@ public int onStartCommand(Intent intent, int flags, int startId) {
+@@ -295,7 +311,8 @@ public int onStartCommand(Intent intent, int flags, int startId) {
                  .addAction(R.drawable.ic_call_black_24dp, getString(R.string.answer), receiveCallPendingIntent)
                  .setAutoCancel(true)
                  .setSound(ringUri)
@@ -64,3 +99,36 @@ index 44be2b6..a6e893e 100644
              
          }
  
+@@ -303,6 +320,19 @@ public int onStartCommand(Intent intent, int flags, int startId) {
+         if (notificationBuilder != null) {
+             incomingCallNotification = notificationBuilder.build();
+         }
++        if (timer != null) {
++            timer.cancel();
++            timer = null;
++        }
++        timer = new Timer();
++        task = new TimerTask() {
++            @Override
++            public void run() {
++                releaseMediaPlayer();
++                releaseVibration();
++                getApplicationContext().stopService(new Intent(getApplicationContext(), CallNotificationService.class));
++            }
++        };
+         timer.schedule(task, 60000);
+         startForeground(NOTIFICATION_ID, incomingCallNotification);
+ 
+@@ -316,7 +346,11 @@ public int onStartCommand(Intent intent, int flags, int startId) {
+ 
+ @Override
+ public void onDestroy() {
+-    super.onDestroy();// release your media player here audioManager.abandonAudioFocus(afChangeListener);
++    super.onDestroy();
++    if (timer != null) {
++        timer.cancel();
++        timer = null;
++    }
+     releaseMediaPlayer();
+     releaseVibration();
+ }
