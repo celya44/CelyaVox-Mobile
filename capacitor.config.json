@@ -3,7 +3,7 @@
   "appName": "CelyaVox Mobile",
   "webDir": "www",
   "server": {
-    "url": "https://freepbx17-dev.celya.fr/sipapp/",
+    "url": "https://freepbx17-dev.celya.fr/celyavox/",
     "cleartext": true
   }
 }
