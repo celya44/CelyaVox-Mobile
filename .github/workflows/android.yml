@@ -36,7 +36,25 @@ jobs:
       - name: Create google-services.json
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-        run: python3 -c "import os; f = open('android/app/google-services.json', 'w'); f.write(os.environ['GOOGLE_SERVICES_JSON']); f.close()"
+        run: |
+          python3 -c "
+          import os, json, sys, base64
+          content = os.environ['GOOGLE_SERVICES_JSON']
+          try:
+            json.loads(content)
+          except:
+            try:
+              decoded = base64.b64decode(content).decode('utf-8')
+              json.loads(decoded)
+              content = decoded
+              print('Auto-decoded Base64 secret')
+            except:
+              print('::error::The GOOGLE_SERVICES_JSON secret is not valid JSON.')
+              sys.exit(1)
+          
+          with open('android/app/google-services.json', 'w') as f:
+            f.write(content)
+          "
 
       - name: Sync Capacitor
         run: npx cap sync android
