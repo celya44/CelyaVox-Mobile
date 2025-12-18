@@ -30,6 +30,12 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      - name: Create GoogleService-Info.plist
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        run: |
+          echo "$GOOGLE_SERVICE_INFO_PLIST" > ios/App/App/GoogleService-Info.plist
+
       - name: Sync Capacitor
         run: npx cap sync ios
 
@@ -42,3 +48,9 @@ jobs:
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
             build
+
+      - name: Upload iOS App
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-CelyaVox-Mobile-iOS
+          path: ios/App/build/Debug-iphoneos/App.app

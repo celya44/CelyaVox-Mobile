@@ -60,7 +60,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: app-CelyaVox-Mobile-Android
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
   build-ios:
@@ -97,3 +97,9 @@ jobs:
         run: |
           cd ios
           xcodebuild -workspace App/App.xcworkspace -scheme App -sdk iphonesimulator -configuration Debug clean build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+
+      - name: Upload iOS App
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-CelyaVox-Mobile-iOS
+          path: ios/App/build/Debug-iphonesimulator/App.app

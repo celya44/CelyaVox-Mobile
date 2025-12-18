@@ -3,9 +3,11 @@ dist/
 www/
 .DS_Store
 .env
-phone/
+phone
 
 firebase-service-account.json
+android/app/google-services.json
+ios/App/App/GoogleService-Info.plist
 
 # Android
 android/build/
