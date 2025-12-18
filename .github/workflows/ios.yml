@@ -33,8 +33,7 @@ jobs:
       - name: Create GoogleService-Info.plist
         env:
           GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
-        run: |
-          echo "$GOOGLE_SERVICE_INFO_PLIST" > ios/App/App/GoogleService-Info.plist
+        run: python3 -c "import os; f = open('ios/App/App/GoogleService-Info.plist', 'w'); f.write(os.environ['GOOGLE_SERVICE_INFO_PLIST']); f.close()"
 
       - name: Sync Capacitor
         run: npx cap sync ios
