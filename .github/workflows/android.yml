@@ -56,27 +56,39 @@ jobs:
             f.write(content)
           "
 
+      - name: Create keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/keystore.jks
+
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Build Android APK (Debug)
+      - name: Build Android APK (Release)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           cd android
-          ./gradlew assembleDebug
+          ./gradlew assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-CelyaVox-Mobile-Android-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
 
-      - name: Build Android AAB (Debug)
+      - name: Build Android AAB (Release)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           cd android
-          ./gradlew bundleDebug
+          ./gradlew bundleRelease
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
           name: app-CelyaVox-Mobile-Android-AAB
-          path: android/app/build/outputs/bundle/debug/app-debug.aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
