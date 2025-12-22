@@ -30,13 +30,25 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      - name: Cache CocoaPods
+        uses: actions/cache@v3
+        with:
+          path: ios/App/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('ios/App/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+
       - name: Create GoogleService-Info.plist
         env:
           GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
         run: python3 -c "import os; f = open('ios/App/App/GoogleService-Info.plist', 'w'); f.write(os.environ['GOOGLE_SERVICE_INFO_PLIST']); f.close()"
 
       - name: Sync Capacitor
-        run: npx cap sync ios
+        run: |
+          npx cap copy ios
+          npx cap update ios --no-install
+          cd ios/App
+          pod install --repo-update
 
       - name: Build iOS App (Unsigned)
         run: |
