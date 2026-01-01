@@ -32,6 +32,9 @@ jobs:
         with:
           packages: platform-tools platforms;android-35 build-tools;35.0.0
 
+      - name: Install libvips dependencies
+        run: sudo apt-get update && sudo apt-get install -y libvips42 libvips-dev
+
       - name: Install Dependencies
         run: npm install
 
