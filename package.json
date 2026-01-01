@@ -16,6 +16,7 @@
     "@capacitor/core": "^6.2.1",
     "@capacitor/ios": "^6.2.1",
     "@capacitor/push-notifications": "^6.0.5",
+    "@capacitor-community/barcode-scanner": "^5.0.7",
     "callkit-voip-capacitor-plugin": "^1.2.3"
   },
   "devDependencies": {
