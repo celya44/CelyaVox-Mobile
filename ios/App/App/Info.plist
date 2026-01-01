@@ -46,7 +46,7 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>This app requires camera access for video calls.</string>
+	<string>This app requires camera access for video calls and QR code configuration scanning.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app requires microphone access for voice calls.</string>
 	<key>UIBackgroundModes</key>
