@@ -1,5 +1,4 @@
 diff --git a/node_modules/callkit-voip-capacitor-plugin/CallkitVoipCapacitorPlugin.podspec b/node_modules/callkit-voip-capacitor-plugin/CallkitVoipCapacitorPlugin.podspec
-index 34c4562..9e0c2a8 100644
 --- a/node_modules/callkit-voip-capacitor-plugin/CallkitVoipCapacitorPlugin.podspec
 +++ b/node_modules/callkit-voip-capacitor-plugin/CallkitVoipCapacitorPlugin.podspec
 @@
