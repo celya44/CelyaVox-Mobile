@@ -1,11 +1,8 @@
 diff --git a/node_modules/callkit-voip-capacitor-plugin/CallkitVoipCapacitorPlugin.podspec b/node_modules/callkit-voip-capacitor-plugin/CallkitVoipCapacitorPlugin.podspec
+index 34c4562..34c4562 100644
 --- a/node_modules/callkit-voip-capacitor-plugin/CallkitVoipCapacitorPlugin.podspec
 +++ b/node_modules/callkit-voip-capacitor-plugin/CallkitVoipCapacitorPlugin.podspec
-@@
-   s.license = package['license']
-   s.homepage = package['repository']['url']
-   s.author = package['author']
-   s.source = { :git => package['repository']['url'], :tag => s.version.to_s }
+@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
    s.source_files = 'ios/Plugin/**/*.{swift,h,m,c,cc,mm,cpp}'
    s.ios.deployment_target  = '13.0'
    s.dependency 'Capacitor'
