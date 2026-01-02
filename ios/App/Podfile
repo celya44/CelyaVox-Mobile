@@ -17,6 +17,10 @@ end
 target 'App' do
   capacitor_pods
   # Add your Pods here
+
+  # Pin Firebase/Auth to 10.x to stay compatible with MLKit (which pulls GoogleUtilities 7.x).
+  # Callkit plugin otherwise resolves Firebase 11.x, which requires GoogleUtilities 8.x and conflicts with MLKit.
+  pod 'Firebase/Auth', '~> 10.25'
 end
 
 post_install do |installer|
