@@ -6,20 +6,20 @@ index f2ccfba..00610e2 100644
      public void load(){
          staticBridge   = this.bridge;
          context = this.getActivity().getApplicationContext();
-+        
++
 +        // Check for initial intent (Cold Start)
 +        Intent intent = this.bridge.getActivity().getIntent();
 +        if (intent != null) {
 +            handleIntent(intent);
 +        }
      }
- 
+
      @Override
      protected void handleOnNewIntent(Intent data) {
          super.handleOnNewIntent(data);
 +        handleIntent(data);
 +    }
-+    
++
 +    private void handleIntent(Intent data) {
 +        String action = data.getAction();
          String callerId = data.getStringExtra("callerId");
@@ -38,14 +38,63 @@ index f2ccfba..00610e2 100644
 +
 +        if (eventName != null) {
 +            notifyEvent(eventName, callerId, group, message, organization, roomname, source, title, type, duration, media);
-+            
++
 +            // If the user clicked "Answer" (RECEIVE_CALL), stop the service immediately
 +            if ("callAnswered".equals(eventName)) {
 +                stopCallServices();
 +            }
 +        }
      }
- 
+
+     @PluginMethod
+diff --git a/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallKitVoipPlugin.java b/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallKitVoipPlugin.java
+index f2ccfba..00610e2 100644
+--- a/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallKitVoipPlugin.java
++++ b/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallKitVoipPlugin.java
+@@ -36,11 +36,22 @@ public class CallKitVoipPlugin extends Plugin {
+     public void load(){
+         staticBridge   = this.bridge;
+         context = this.getActivity().getApplicationContext();
+
+         // Check for initial intent (Cold Start)
+         Intent intent = this.bridge.getActivity().getIntent();
+         if (intent != null) {
+             handleIntent(intent);
+         }
+     }
+
+     @Override
+     protected void handleOnNewIntent(Intent data) {
+         super.handleOnNewIntent(data);
+         handleIntent(data);
+     }
+
+     private void handleIntent(Intent data) {
+         String action = data.getAction();
+         String callerId = data.getStringExtra("callerId");
+         String group = data.getStringExtra("group");
+         String message = data.getStringExtra("message");
+@@ -52,6 +63,21 @@ public class CallKitVoipPlugin extends Plugin {
+         String duration = data.getStringExtra("duration");
+         String media = data.getStringExtra("media");
+         String eventName = data.getStringExtra("eventName");
+
+         // Handle Full Screen Intent Wake Up (App opened automatically)
+         if ("OPEN_APP_INCOMING_CALL".equals(action)) {
+             Log.d("CallKitVoip", "App opened via Full Screen Intent - Stopping Service");
+             stopCallServices();
+         }
+
+         if (eventName != null) {
+             notifyEvent(eventName, callerId, group, message, organization, roomname, source, title, type, duration, media);
+
+             // If the user clicked "Answer" (RECEIVE_CALL), stop the service immediately
+             if ("callAnswered".equals(eventName)) {
+                 stopCallServices();
+             }
+         }
+     }
+
      @PluginMethod
 diff --git a/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallNotificationService.java b/node_modules/callkit-voip-capacitor-plugin/android/src/main/java/com/bfine/capactior/callkitvoip/CallNotificationService.java
 index 44be2b6..72b4e01 100644
@@ -54,7 +103,7 @@ index 44be2b6..72b4e01 100644
 @@ -50,17 +50,8 @@ private Handler handler;
  private boolean status = false;
  private boolean vstatus = false;
- 
+
 -Timer timer = new Timer();
 -
 -TimerTask task = new TimerTask() {
@@ -68,58 +117,57 @@ index 44be2b6..72b4e01 100644
 -};
 +private Timer timer;
 +private TimerTask task;
- 
- 
+
+
  @Nullable
 @@ -217,11 +208,26 @@ public int onStartCommand(Intent intent, int flags, int startId) {
          Log.d("onStartCommand!!", roomname);
      }
      try {
-+        // FIX: Use the package name from context instead of hardcoded class
-+        String packageName = getApplicationContext().getPackageName();
-+        Intent receiveCallAction = getPackageManager().getLaunchIntentForPackage(packageName);
-+        
-+        if (receiveCallAction == null) {
-+            Log.e("CallNotificationService", "Could not find launch intent for package: " + packageName);
-+            // Fallback to generic intent if possible, or just log error
-+            receiveCallAction = new Intent(Intent.ACTION_MAIN);
-+            receiveCallAction.addCategory(Intent.CATEGORY_LAUNCHER);
-+            receiveCallAction.setPackage(packageName);
-+        } else {
-+            // Ensure we have the right flags to bring activity to front
-+            receiveCallAction.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-+        }
- 
-+        /*
+         // FIX: Use the package name from context instead of hardcoded class
+         String packageName = getApplicationContext().getPackageName();
+         Intent receiveCallAction = getPackageManager().getLaunchIntentForPackage(packageName);
+
+         if (receiveCallAction == null) {
+             Log.e("CallNotificationService", "Could not find launch intent for package: " + packageName);
+             // Fallback to generic intent if possible, or just log error
+             receiveCallAction = new Intent(Intent.ACTION_MAIN);
+             receiveCallAction.addCategory(Intent.CATEGORY_LAUNCHER);
+             receiveCallAction.setPackage(packageName);
+         } else {
+             // Ensure we have the right flags to bring activity to front
+             receiveCallAction.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+         }
+
+         /*
          Class<?> mainAppClass = Class.forName("com.lsportal.migration.MainApplication");
          Object mainAppInstance = mainAppClass.getMethod("getInstance").invoke(null);
          Intent receiveCallAction = (Intent) mainAppClass.getMethod("getLaunchMainActivity").invoke(mainAppInstance);;
--        
-+        */
- 
+         */
+
          // Intent receiveCallAction = new Intent(getApplicationContext(), mainAppClass);
- 
+
 @@ -242,6 +248,13 @@ public int onStartCommand(Intent intent, int flags, int startId) {
- 
+
          receiveCallAction.setAction("RECEIVE_CALL");
- 
-+        // NEW: Create an intent just to open the app (without answering)
-+        Intent openAppAction = new Intent(receiveCallAction);
-+        openAppAction.setAction("OPEN_APP_INCOMING_CALL");
-+        openAppAction.removeExtra("ConstantApp.CALL_RESPONSE_ACTION_KEY");
-+        openAppAction.removeExtra("ACTION_TYPE");
-+        openAppAction.removeExtra("eventName");
-+
+
+         // NEW: Create an intent just to open the app (without answering)
+         Intent openAppAction = new Intent(receiveCallAction);
+         openAppAction.setAction("OPEN_APP_INCOMING_CALL");
+         openAppAction.removeExtra("ConstantApp.CALL_RESPONSE_ACTION_KEY");
+         openAppAction.removeExtra("ACTION_TYPE");
+         openAppAction.removeExtra("eventName");
+
          Intent cancelCallAction = new Intent(getApplicationContext(), CallNotificationActionReceiver.class);
          cancelCallAction.putExtra("ConstantApp.CALL_RESPONSE_ACTION_KEY", "ConstantApp.CALL_CANCEL_ACTION");
          cancelCallAction.putExtra("ACTION_TYPE", "CANCEL_CALL");
 @@ -281,6 +294,9 @@ public int onStartCommand(Intent intent, int flags, int startId) {
          PendingIntent cancelCallPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 1201, cancelCallAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
          PendingIntent callDialogPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 1202, callDialogAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-         
-+        // NEW: PendingIntent for Full Screen / Content Click
-+        PendingIntent openAppPendingIntent = PendingIntent.getActivity(getApplicationContext(), 1203, openAppAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-+
+
+         // NEW: PendingIntent for Full Screen / Content Click
+         PendingIntent openAppPendingIntent = PendingIntent.getActivity(getApplicationContext(), 1203, openAppAction, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
          // createChannel();
          NotificationCompat.Builder notificationBuilder = null;
          if (data != null) {
@@ -130,35 +178,35 @@ index 44be2b6..72b4e01 100644
 -                .setFullScreenIntent(callDialogPendingIntent, true);
 +                .setContentIntent(openAppPendingIntent)
 +                .setFullScreenIntent(openAppPendingIntent, true);
-             
+
          }
- 
+
 @@ -303,6 +320,19 @@ public int onStartCommand(Intent intent, int flags, int startId) {
          if (notificationBuilder != null) {
              incomingCallNotification = notificationBuilder.build();
          }
-+        if (timer != null) {
-+            timer.cancel();
-+            timer = null;
-+        }
-+        timer = new Timer();
-+        task = new TimerTask() {
-+            @Override
-+            public void run() {
-+                releaseMediaPlayer();
-+                releaseVibration();
-+                getApplicationContext().stopService(new Intent(getApplicationContext(), CallNotificationService.class));
-+            }
-+        };
+         if (timer != null) {
+             timer.cancel();
+             timer = null;
+         }
+         timer = new Timer();
+         task = new TimerTask() {
+             @Override
+             public void run() {
+                 releaseMediaPlayer();
+                 releaseVibration();
+                 getApplicationContext().stopService(new Intent(getApplicationContext(), CallNotificationService.class));
+             }
+         };
          timer.schedule(task, 60000);
          startForeground(NOTIFICATION_ID, incomingCallNotification);
- 
+
 @@ -316,7 +346,11 @@ public int onStartCommand(Intent intent, int flags, int startId) {
- 
+
  @Override
  public void onDestroy() {
 -    super.onDestroy();// release your media player here audioManager.abandonAudioFocus(afChangeListener);
-+    super.onDestroy();
++    super.onDestroy();// release your media player here audioManager.abandonAudioFocus(afChangeListener);
 +    if (timer != null) {
 +        timer.cancel();
 +        timer = null;
@@ -172,18 +220,18 @@ index 34c4562..9e0c2a8 100644
 --- a/node_modules/callkit-voip-capacitor-plugin/CallkitVoipCapacitorPlugin.podspec
 +++ b/node_modules/callkit-voip-capacitor-plugin/CallkitVoipCapacitorPlugin.podspec
 @@
-    s.license = package['license']
-    s.homepage = package['repository']['url']
-    s.author = package['author']
-    s.source = { :git => package['repository']['url'], :tag => s.version.to_s }
-    s.source_files = 'ios/Plugin/**/*.{swift,h,m,c,cc,mm,cpp}'
-    s.ios.deployment_target  = '13.0'
-    s.dependency 'Capacitor'
+   s.license = package['license']
+   s.homepage = package['repository']['url']
+   s.author = package['author']
+   s.source = { :git => package['repository']['url'], :tag => s.version.to_s }
+   s.source_files = 'ios/Plugin/**/*.{swift,h,m,c,cc,mm,cpp}'
+   s.ios.deployment_target  = '13.0'
+   s.dependency 'Capacitor'
 -  s.dependency 'Firebase/Auth', '~> 11.0'
 -  s.dependency 'Firebase/Core', '~> 11.0'
 -  s.dependency 'Firebase/Database', '~> 11.0'
 +  s.dependency 'Firebase/Auth', '~> 10.25'
 +  s.dependency 'Firebase/Core', '~> 10.25'
 +  s.dependency 'Firebase/Database', '~> 10.25'
-    s.swift_version = '5.1'
+   s.swift_version = '5.1'
  end
