@@ -166,3 +166,24 @@ index 44be2b6..72b4e01 100644
      releaseMediaPlayer();
      releaseVibration();
  }
+
+diff --git a/node_modules/callkit-voip-capacitor-plugin/CallkitVoipCapacitorPlugin.podspec b/node_modules/callkit-voip-capacitor-plugin/CallkitVoipCapacitorPlugin.podspec
+index 34c4562..9e0c2a8 100644
+--- a/node_modules/callkit-voip-capacitor-plugin/CallkitVoipCapacitorPlugin.podspec
++++ b/node_modules/callkit-voip-capacitor-plugin/CallkitVoipCapacitorPlugin.podspec
+@@
+    s.license = package['license']
+    s.homepage = package['repository']['url']
+    s.author = package['author']
+    s.source = { :git => package['repository']['url'], :tag => s.version.to_s }
+    s.source_files = 'ios/Plugin/**/*.{swift,h,m,c,cc,mm,cpp}'
+    s.ios.deployment_target  = '13.0'
+    s.dependency 'Capacitor'
+-  s.dependency 'Firebase/Auth', '~> 11.0'
+-  s.dependency 'Firebase/Core', '~> 11.0'
+-  s.dependency 'Firebase/Database', '~> 11.0'
++  s.dependency 'Firebase/Auth', '~> 10.25'
++  s.dependency 'Firebase/Core', '~> 10.25'
++  s.dependency 'Firebase/Database', '~> 10.25'
+    s.swift_version = '5.1'
+ end
