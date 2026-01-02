@@ -37,140 +37,15 @@ function loadEnv($filePath) {
     }
 }
 
-// Générer un JWT pour l'authentification OAuth2
-function generateJWT($serviceAccount) {
-    $now = time();
-    $header = [
-        'alg' => 'RS256',
-        'typ' => 'JWT'
-    ];
-    
-    $payload = [
-        'iss' => $serviceAccount['client_email'],
-        'sub' => $serviceAccount['client_email'],
-        'aud' => 'https://oauth2.googleapis.com/token',
-        'iat' => $now,
-        'exp' => $now + 3600,
-        'scope' => 'https://www.googleapis.com/auth/firebase.messaging'
-    ];
-    
-    $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode(json_encode($header)));
-    $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode(json_encode($payload)));
-    
-    $signature = '';
-    $privateKey = openssl_pkey_get_private($serviceAccount['private_key']);
-    openssl_sign($base64UrlHeader . '.' . $base64UrlPayload, $signature, $privateKey, OPENSSL_ALGO_SHA256);
-    openssl_free_key($privateKey);
-    
-    $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
-    
-    return $base64UrlHeader . '.' . $base64UrlPayload . '.' . $base64UrlSignature;
-}
-
-// Obtenir un access token OAuth2
-function getAccessToken($serviceAccount) {
-    $jwt = generateJWT($serviceAccount);
-    
-    $ch = curl_init('https://oauth2.googleapis.com/token');
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-        'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        'assertion' => $jwt
-    ]));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($httpCode !== 200) {
-        return null;
-    }
-    
-    $data = json_decode($response, true);
-    return $data['access_token'] ?? null;
-}
-
-// Fonction d'envoi de notification FCM (API v1)
 function sendWakeUpNotification($token) {
-    $serviceAccountPath = getenv('FCM_SERVICE_ACCOUNT_JSON');
-    $projectId = getenv('FCM_PROJECT_ID');
     
-    if (empty($serviceAccountPath) || empty($projectId)) {
-        return [
-            'success' => false,
-            'error' => 'FCM_SERVICE_ACCOUNT_JSON ou FCM_PROJECT_ID non configuré dans .env'
-        ];
-    }
-    
-    if (!file_exists($serviceAccountPath)) {
-        return [
-            'success' => false,
-            'error' => "Fichier service account introuvable: $serviceAccountPath"
-        ];
-    }
-    
-    // Charger le service account
-    $serviceAccountJson = file_get_contents($serviceAccountPath);
-    $serviceAccount = json_decode($serviceAccountJson, true);
-    
-    if (!$serviceAccount) {
-        return [
-            'success' => false,
-            'error' => 'Fichier service account JSON invalide'
-        ];
-    }
-    
-    // Obtenir le token OAuth2
-    $accessToken = getAccessToken($serviceAccount);
-    
-    if (!$accessToken) {
-        return [
-            'success' => false,
-            'error' => 'Impossible d\'obtenir le token OAuth2'
-        ];
-    }
-    
-    // Message FCM v1 DATA-ONLY (sans notification) pour forcer l'appel de onMessageReceived()
-    $message = [
-        'message' => [
-            'token' => $token,
-            // PAS de clé 'notification' ici - seulement 'data'
-            // Cela force Firebase à appeler onMessageReceived() même si l'app est fermée
-            'data' => [
-                'type' => 'wake_up',
-                'forceOpen' => 'true',
-                'action' => 'open_app',
-                'timestamp' => (string)time(),
-                'title' => 'Réveil CelyaVox',
-                'body' => 'Ouverture immédiate de l’app'
-            ],
-            'android' => [
-                'priority' => 'high',
-                'ttl' => '60s'
-            ],
-            'apns' => [
-                'headers' => [
-                    'apns-priority' => '10',
-                    'apns-push-type' => 'background'
-                ],
-                'payload' => [
-                    'aps' => [
-                        'content-available' => 1
-                    ]
-                ]
-            ]
-        ]
-    ];
-    
-    $url = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
+    $url = "https://celyavox.celya.fr/phone/wake_app.php";
     
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Authorization: Bearer ' . $accessToken,
         'Content-Type: application/json'
     ]);
+    $message = [ 'server' => 'freepbx17-dev.celya.fr', 'token' => $token ];
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($message));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -196,12 +71,6 @@ function sendWakeUpNotification($token) {
         'response' => $responseData,
         'raw_response' => $response
     ];
-}
-
-// Validation du token
-function isValidToken($token) {
-    // Les tokens FCM font généralement plus de 100 caractères
-    return !empty($token) && strlen($token) > 50;
 }
 
 // Récupérer le token depuis la BDD
@@ -266,12 +135,6 @@ $token = getFcmTokenFromExtension($extension);
 
 if (!$token) {
     echo "❌ Erreur: Aucun token FCM trouvé pour l'extension $extension\n";
-    exit(1);
-}
-
-// Validation du token
-if (!isValidToken($token)) {
-    echo "❌ Erreur: Le token FCM trouvé en base semble invalide (trop court)\n";
     exit(1);
 }
 
