@@ -15,7 +15,7 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 public class PushMessagingService extends FirebaseMessagingService {
-	private static final String CHANNEL_ID = "Calls";
+	private static final String CHANNEL_ID = "CallsV2";
 	private static final int NOTIFICATION_ID = 1001;
 
 	@Override
@@ -68,6 +68,7 @@ public class PushMessagingService extends FirebaseMessagingService {
 				.setContentText(TextUtils.isEmpty(body) ? "" : body)
 				.setPriority(NotificationCompat.PRIORITY_MAX)
 				.setCategory(NotificationCompat.CATEGORY_CALL)
+				.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 				.setOngoing(true)
 				.setTimeoutAfter(30000)
 				.setAutoCancel(true)
@@ -89,7 +90,7 @@ public class PushMessagingService extends FirebaseMessagingService {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			NotificationChannel channel = new NotificationChannel(
 					CHANNEL_ID,
-					"Appels entrants",
+					"Appels entrants (urgent)",
 					NotificationManager.IMPORTANCE_HIGH
 			);
 			channel.setLockscreenVisibility(android.app.Notification.VISIBILITY_PUBLIC);
