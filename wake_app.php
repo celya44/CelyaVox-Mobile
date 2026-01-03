@@ -236,6 +236,30 @@ function getFcmTokenFromExtension($extension) {
     }
 }
 
+// Vérifie si un contact PJSIP est enregistré
+function isContactRegistered($contactAor) {
+    $output = shell_exec("asterisk -rx 'pjsip show contacts'");
+
+    if ($output === null) {
+        return false;
+    }
+
+    return (bool)preg_match('/Contact:\\s*' . preg_quote($contactAor, '/') . '\\b/', $output);
+}
+
+// Attend qu'un contact soit enregistré avec tentatives limitées
+function waitForRegisteredContact($contactAor, $maxAttempts = 10, $sleepMicroseconds = 500000) {
+    for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+        if (isContactRegistered($contactAor)) {
+            return true;
+        }
+
+        usleep($sleepMicroseconds);
+    }
+
+    return false;
+}
+
 // --- MAIN ---
 
 // Chargement de la configuration
@@ -288,7 +312,16 @@ if ($result['success']) {
         echo "📊 Résultat FCM:\n";
         echo "   - Message: " . $result['response']['name'] . "\n";
     }
-    
+
+    $contactAor = $extension;
+    echo "🔁 Vérification de l'enregistrement PJSIP pour $contactAor...\n";
+
+    if (waitForRegisteredContact($contactAor)) {
+        echo "📞 Extension $contactAor enregistrée, lancement de l'appel...\n";
+        shell_exec("asterisk -rx 'channel originate PJSIP/$contactAor application Playback demo-congrats'");
+    } else {
+        echo "⚠️ Extension $contactAor non enregistrée après plusieurs tentatives, appel annulé.\n";
+    }
     exit(0);
 } else {
     echo "❌ Échec de l'envoi\n\n";

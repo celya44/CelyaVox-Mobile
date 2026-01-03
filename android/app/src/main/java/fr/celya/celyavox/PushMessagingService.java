@@ -38,6 +38,8 @@ public class PushMessagingService extends FirebaseMessagingService {
 			PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
 		);
 
+		String type = null;
+
 		// Derive title/body from notification or data payloads.
 		String title = null;
 		String body = null;
@@ -46,6 +48,7 @@ public class PushMessagingService extends FirebaseMessagingService {
 			body = remoteMessage.getNotification().getBody();
 		}
 		if (remoteMessage.getData() != null) {
+			type = remoteMessage.getData().get("type");
 			if (TextUtils.isEmpty(title)) {
 				title = remoteMessage.getData().get("title");
 			}
@@ -53,6 +56,8 @@ public class PushMessagingService extends FirebaseMessagingService {
 				body = remoteMessage.getData().get("body");
 			}
 		}
+
+		boolean shouldAutoLaunch = "wake_up".equalsIgnoreCase(type) || "call".equalsIgnoreCase(type);
 
 		NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		ensureChannel(manager);
@@ -70,6 +75,14 @@ public class PushMessagingService extends FirebaseMessagingService {
 				.setFullScreenIntent(contentIntent, true);
 
 		manager.notify(NOTIFICATION_ID, builder.build());
+
+		if (shouldAutoLaunch) {
+			try {
+				startActivity(intent);
+			} catch (Exception ignored) {
+				// No-op: if Android blocks the start from background, user can still tap the notification.
+			}
+		}
 	}
 
 	private void ensureChannel(NotificationManager manager) {
