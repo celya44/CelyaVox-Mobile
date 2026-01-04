@@ -3,10 +3,17 @@ package fr.celya.celyavox;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
+import android.telecom.PhoneAccount;
+import android.telecom.PhoneAccountHandle;
+import android.telecom.TelecomManager;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -15,6 +22,7 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 public class PushMessagingService extends FirebaseMessagingService {
+	private static final String TAG = "PushMessagingService";
 	private static final String CHANNEL_ID = "CallsV2";
 	private static final int NOTIFICATION_ID = 1001;
 
@@ -28,21 +36,11 @@ public class PushMessagingService extends FirebaseMessagingService {
 	public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
 		super.onMessageReceived(remoteMessage);
 
-		// Build an intent that will launch (or bring to front) the main activity.
-		Intent intent = new Intent(this, MainActivity.class);
-		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		PendingIntent contentIntent = PendingIntent.getActivity(
-			this,
-			0,
-			intent,
-			PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-		);
-
 		String type = null;
-
-		// Derive title/body from notification or data payloads.
 		String title = null;
 		String body = null;
+
+		// Extraire les données du message
 		if (remoteMessage.getNotification() != null) {
 			title = remoteMessage.getNotification().getTitle();
 			body = remoteMessage.getNotification().getBody();
@@ -56,6 +54,76 @@ public class PushMessagingService extends FirebaseMessagingService {
 				body = remoteMessage.getData().get("body");
 			}
 		}
+
+		// Si c'est un réveil/appel, utiliser ConnectionService
+		if ("wake_up".equalsIgnoreCase(type) || "call".equalsIgnoreCase(type)) {
+			Log.d(TAG, "Incoming call detected, using ConnectionService");
+			showIncomingCall(title, body);
+		} else {
+			// Sinon, afficher une notification normale
+			Log.d(TAG, "Regular notification");
+			showNotification(title, body);
+		}
+	}
+
+	private void showIncomingCall(String callerName, String callInfo) {
+		TelecomManager telecomManager = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
+		if (telecomManager == null) {
+			Log.e(TAG, "TelecomManager not available");
+			showNotification(callerName, callInfo);
+			return;
+		}
+
+		// Enregistrer le PhoneAccount si nécessaire
+		PhoneAccountHandle phoneAccountHandle = getPhoneAccountHandle();
+		if (!telecomManager.getPhoneAccount(phoneAccountHandle).isEnabled()) {
+			registerPhoneAccount();
+		}
+
+		// Créer le bundle d'extras
+		Bundle extras = new Bundle();
+		extras.putString("callId", String.valueOf(System.currentTimeMillis()));
+		extras.putString("callerName", callerName != null ? callerName : "CelyaVox");
+		extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle);
+		extras.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, false);
+
+		// Ajouter l'incoming call
+		Uri callUri = Uri.fromParts("tel", "celyavox", null);
+		telecomManager.addNewIncomingCall(phoneAccountHandle, extras);
+
+		Log.d(TAG, "Incoming call added to TelecomManager");
+	}
+
+	private void registerPhoneAccount() {
+		TelecomManager telecomManager = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
+		if (telecomManager == null) {
+			Log.e(TAG, "Cannot register phone account: TelecomManager unavailable");
+			return;
+		}
+
+		PhoneAccountHandle phoneAccountHandle = getPhoneAccountHandle();
+		PhoneAccount phoneAccount = PhoneAccount.builder(phoneAccountHandle, "CelyaVox")
+				.setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER | PhoneAccount.CAPABILITY_CONNECTION_MANAGER)
+				.build();
+
+		telecomManager.registerPhoneAccount(phoneAccount);
+		Log.d(TAG, "PhoneAccount registered");
+	}
+
+	private PhoneAccountHandle getPhoneAccountHandle() {
+		ComponentName componentName = new ComponentName(this, TelecomConnectionService.class);
+		return new PhoneAccountHandle(componentName, "CelyaVoxAccount");
+	}
+
+	private void showNotification(String title, String body) {
+		Intent intent = new Intent(this, MainActivity.class);
+		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		PendingIntent contentIntent = PendingIntent.getActivity(
+			this,
+			0,
+			intent,
+			PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+		);
 
 		NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		ensureChannel(manager);
