@@ -117,11 +117,35 @@ public class PushMessagingService extends FirebaseMessagingService {
 
 	private void openPhoneAccountSettings() {
 		try {
-			Intent intent = new Intent(TelecomManager.ACTION_CHANGE_PHONE_ACCOUNTS);
-			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			startActivity(intent);
+			// Créer une notification qui ouvrira les paramètres au clic
+			Intent settingsIntent = new Intent(TelecomManager.ACTION_CHANGE_PHONE_ACCOUNTS);
+			settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			
+			PendingIntent pendingIntent = PendingIntent.getActivity(
+				this,
+				1001,
+				settingsIntent,
+				PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+			);
+			
+			NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+			ensureChannel(manager);
+			
+			NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+					.setSmallIcon(R.mipmap.ic_launcher)
+					.setContentTitle("Activation CelyaVox requise")
+					.setContentText("Appuyez pour activer CelyaVox dans les paramètres d'appel")
+					.setStyle(new NotificationCompat.BigTextStyle()
+							.bigText("Pour recevoir les appels, vous devez activer CelyaVox dans les paramètres système. Appuyez ici pour ouvrir les paramètres."))
+					.setPriority(NotificationCompat.PRIORITY_HIGH)
+					.setCategory(NotificationCompat.CATEGORY_STATUS)
+					.setAutoCancel(true)
+					.setContentIntent(pendingIntent);
+			
+			manager.notify(1002, builder.build());
+			Log.d(TAG, "Notification to enable PhoneAccount sent");
 		} catch (Exception e) {
-			Log.e(TAG, "Failed to open phone account settings: " + e.getMessage());
+			Log.e(TAG, "Failed to create notification for phone account settings: " + e.getMessage());
 		}
 	}
 
