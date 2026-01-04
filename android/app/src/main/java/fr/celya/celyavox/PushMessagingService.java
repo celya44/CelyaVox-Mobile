@@ -57,8 +57,6 @@ public class PushMessagingService extends FirebaseMessagingService {
 			}
 		}
 
-		boolean shouldAutoLaunch = "wake_up".equalsIgnoreCase(type) || "call".equalsIgnoreCase(type);
-
 		NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		ensureChannel(manager);
 
@@ -76,14 +74,6 @@ public class PushMessagingService extends FirebaseMessagingService {
 				.setFullScreenIntent(contentIntent, true);
 
 		manager.notify(NOTIFICATION_ID, builder.build());
-
-		if (shouldAutoLaunch) {
-			try {
-				startActivity(intent);
-			} catch (Exception ignored) {
-				// No-op: if Android blocks the start from background, user can still tap the notification.
-			}
-		}
 	}
 
 	private void ensureChannel(NotificationManager manager) {
