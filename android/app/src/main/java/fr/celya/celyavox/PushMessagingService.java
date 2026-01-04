@@ -74,24 +74,27 @@ public class PushMessagingService extends FirebaseMessagingService {
 			return;
 		}
 
-		// Enregistrer le PhoneAccount si nécessaire
-		PhoneAccountHandle phoneAccountHandle = getPhoneAccountHandle();
-		if (!telecomManager.getPhoneAccount(phoneAccountHandle).isEnabled()) {
+		try {
+			// Enregistrer le PhoneAccount (toujours, pour être sûr)
+			PhoneAccountHandle phoneAccountHandle = getPhoneAccountHandle();
 			registerPhoneAccount();
+
+			// Créer le bundle d'extras
+			Bundle extras = new Bundle();
+			extras.putString("callId", String.valueOf(System.currentTimeMillis()));
+			extras.putString("callerName", callerName != null ? callerName : "CelyaVox");
+			extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle);
+			extras.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, false);
+
+			// Ajouter l'incoming call
+			telecomManager.addNewIncomingCall(phoneAccountHandle, extras);
+
+			Log.d(TAG, "Incoming call added to TelecomManager");
+		} catch (SecurityException e) {
+			Log.e(TAG, "SecurityException when adding incoming call: " + e.getMessage());
+			Log.e(TAG, "Falling back to notification");
+			showNotification(callerName, callInfo);
 		}
-
-		// Créer le bundle d'extras
-		Bundle extras = new Bundle();
-		extras.putString("callId", String.valueOf(System.currentTimeMillis()));
-		extras.putString("callerName", callerName != null ? callerName : "CelyaVox");
-		extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle);
-		extras.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, false);
-
-		// Ajouter l'incoming call
-		Uri callUri = Uri.fromParts("tel", "celyavox", null);
-		telecomManager.addNewIncomingCall(phoneAccountHandle, extras);
-
-		Log.d(TAG, "Incoming call added to TelecomManager");
 	}
 
 	private void registerPhoneAccount() {
