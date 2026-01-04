@@ -19,7 +19,6 @@ public class CallConnection extends Connection {
             CAPABILITY_MUTE
         );
         setAudioModeIsVoip(true);
-        setActive();
         Log.d(TAG, "CallConnection created for call: " + callId);
     }
 
