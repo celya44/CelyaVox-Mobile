@@ -79,6 +79,14 @@ public class PushMessagingService extends FirebaseMessagingService {
 			PhoneAccountHandle phoneAccountHandle = getPhoneAccountHandle();
 			registerPhoneAccount();
 
+			// Vérifier si le PhoneAccount est activé
+			if (!isPhoneAccountEnabled(telecomManager, phoneAccountHandle)) {
+				Log.w(TAG, "PhoneAccount not enabled - opening settings");
+				openPhoneAccountSettings();
+				showNotification(callerName, callInfo);
+				return;
+			}
+
 			// Créer le bundle d'extras
 			Bundle extras = new Bundle();
 			extras.putString("callId", String.valueOf(System.currentTimeMillis()));
@@ -94,6 +102,26 @@ public class PushMessagingService extends FirebaseMessagingService {
 			Log.e(TAG, "SecurityException when adding incoming call: " + e.getMessage());
 			Log.e(TAG, "Falling back to notification");
 			showNotification(callerName, callInfo);
+		}
+	}
+
+	private boolean isPhoneAccountEnabled(TelecomManager telecomManager, PhoneAccountHandle handle) {
+		try {
+			PhoneAccount account = telecomManager.getPhoneAccount(handle);
+			return account != null && account.isEnabled();
+		} catch (Exception e) {
+			Log.e(TAG, "Error checking if PhoneAccount is enabled: " + e.getMessage());
+			return false;
+		}
+	}
+
+	private void openPhoneAccountSettings() {
+		try {
+			Intent intent = new Intent(TelecomManager.ACTION_CHANGE_PHONE_ACCOUNTS);
+			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			startActivity(intent);
+		} catch (Exception e) {
+			Log.e(TAG, "Failed to open phone account settings: " + e.getMessage());
 		}
 	}
 
