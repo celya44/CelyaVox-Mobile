@@ -25,8 +25,14 @@ public class CallConnection extends Connection {
 
     @Override
     public void onShowIncomingCallUi() {
-        Log.d(TAG, "onShowIncomingCallUi");
+        Log.d(TAG, "onShowIncomingCallUi - Launching IncomingCallActivity");
         super.onShowIncomingCallUi();
+        
+        // Lancer l'activité d'appel entrant
+        Intent intent = new Intent(TelecomConnectionService.getContext(), IncomingCallActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.putExtra("callId", callId);
+        TelecomConnectionService.getContext().startActivity(intent);
     }
 
     @Override
