@@ -1,4 +1,8 @@
 import { PushNotifications } from '@capacitor/push-notifications';
+import { registerPlugin } from '@capacitor/core';
+
+// Enregistrer le plugin CallEvents
+const CallEvents = registerPlugin('CallEvents');
 
 const addListeners = async () => {
     await PushNotifications.addListener('registration', token => {
@@ -16,6 +20,19 @@ const addListeners = async () => {
 
     await PushNotifications.addListener('pushNotificationActionPerformed', notification => {
         console.log('Push notification action performed', notification.actionId, notification.inputValue);
+    });
+    
+    // Écouter les événements d'appel du ConnectionService
+    await CallEvents.addListener('callAnswered', data => {
+        console.log('🟢 APPEL ACCEPTÉ depuis ConnectionService:', data);
+        // ICI : Appelez votre fonction pour décrocher l'appel SIP réel
+        // Exemple: window.answerSipCall(data.callId);
+    });
+    
+    await CallEvents.addListener('callRejected', data => {
+        console.log('🔴 APPEL REJETÉ depuis ConnectionService:', data);
+        // ICI : Appelez votre fonction pour rejeter l'appel SIP réel
+        // Exemple: window.rejectSipCall(data.callId);
     });
 }
 

@@ -25,6 +25,10 @@ public class MainActivity extends BridgeActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		// Enregistrer le plugin CallEvents
+		registerPlugin(CallEventsPlugin.class);
+		
 		// Ensure IME is shown and layout resizes properly on newer SDKs
 		getWindow().setSoftInputMode(
 			WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE | WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN
